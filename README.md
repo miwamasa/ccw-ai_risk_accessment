@@ -214,7 +214,21 @@ docker-compose up -d
 # APIドキュメント: http://localhost:8000/docs
 ```
 
-### ローカル開発環境
+### ローカル開発環境（簡単セットアップ）
+
+自動セットアップスクリプトを使用（推奨）：
+
+```bash
+# Linux/Mac
+./setup_local.sh
+
+# Windows
+setup_local.bat
+```
+
+スクリプト実行後、`backend/.env`を編集してAPIキーを設定してください。
+
+### ローカル開発環境（手動セットアップ）
 
 **バックエンド:**
 ```bash
@@ -223,7 +237,8 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env  # APIキーを設定
-uvicorn app.main:app --reload --port 8000
+python init_db.py  # データベース初期化
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **フロントエンド:**
