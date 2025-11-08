@@ -1,10 +1,19 @@
-# AIリスクアセスメント言語システム - プロジェクトドキュメント
+# AIリスクアセスメント言語システム
 
 ## 📋 概要
 
-本プロジェクトは、LLM（大規模言語モデル）を言語シミュレータとして活用し、AIシステムのリスクを体系的に特定・分析・評価し、適切な対策を導出するシステムの完全な仕様書およびドキュメント一式です。
+本プロジェクトは、LLM（大規模言語モデル）を言語シミュレータとして活用し、AIシステムのリスクを体系的に特定・分析・評価し、適切な対策を導出する**実装済みの動作するシステム**です。
 
 Partnership AIの事故データベースを参考に、**13種類のガイドワード**（データ5種、モデル4種、運用4種）に基づいて、**過酷度・発生頻度・回避可能性**の3軸でリスクを因数分解し、これらを改善することで対策を導出するアプローチを採用しています。
+
+## ✨ 実装状況
+
+- ✅ **バックエンド実装完了**（Python + FastAPI）
+- ✅ **フロントエンド実装完了**（React + TypeScript + Vite）
+- ✅ **LLM統合**（OpenAI GPT-4 / Anthropic Claude）
+- ✅ **データベース設計**（PostgreSQL + SQLAlchemy）
+- ✅ **Docker環境**（docker-compose対応）
+- ✅ **テストコード**（pytest）
 
 ## 📁 ドキュメント構成
 
@@ -188,32 +197,52 @@ Partnership AIの事故データベースを参考に、**13種類のガイド�
 
 ## 🚀 クイックスタート
 
-### システム利用者向け
-
-1. **アカウント登録**: システムにアクセスして新規登録
-2. **リスク状況入力**: AIシステムの状況を記述
-3. **リスク特定**: 自動的にリスクが洗い出される（約30秒）
-4. **リスク評価**: 各リスクを3軸で評価（約15秒/リスク）
-5. **対策確認**: 推奨される対策を確認
-6. **レポート出力**: PDF形式でダウンロード
-
-**所要時間**: 約30-50分
-
-### 開発者向け
+### Dockerで起動（推奨）
 
 ```bash
-# リポジトリのクローン
-git clone https://github.com/your-org/ai-risk-assessment.git
-cd ai-risk-assessment
+# 1. 環境変数の設定
+cp backend/.env.example .env
+# .envファイルを編集してLLM APIキーを設定
+# OPENAI_API_KEY=sk-xxx または ANTHROPIC_API_KEY=sk-ant-xxx
 
-# Dockerで起動
+# 2. Dockerコンテナの起動
 docker-compose up -d
 
-# ブラウザでアクセス
-open http://localhost:3000
+# 3. ブラウザでアクセス
+# フロントエンド: http://localhost:3000
+# バックエンドAPI: http://localhost:8000
+# APIドキュメント: http://localhost:8000/docs
 ```
 
-詳細は `user_guide.md` の開発者ガイドを参照してください。
+### ローカル開発環境
+
+**バックエンド:**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env  # APIキーを設定
+uvicorn app.main:app --reload --port 8000
+```
+
+**フロントエンド:**
+```bash
+cd frontend
+npm install
+npm run dev  # http://localhost:3000 で起動
+```
+
+詳細は `SETUP.md` を参照してください。
+
+### システム利用の流れ
+
+1. **リスク状況入力**: AIシステムの状況を記述
+2. **リスク特定**: 自動的にリスクが洗い出される（約30秒）
+3. **リスク評価**: 各リスクを3軸で評価（約15秒/リスク）
+4. **対策確認**: 推奨される対策を確認
+
+**所要時間**: 約30-50分
 
 ## 📊 言語システムのフロー
 
@@ -309,26 +338,52 @@ open http://localhost:3000
 - 公平性指標による継続的モニタリング
 - 人間レビュープロセスの導入
 
+## 📦 プロジェクト構成
+
+```
+.
+├── backend/                    # バックエンド（Python + FastAPI）
+│   ├── app/
+│   │   ├── api/routes/        # APIエンドポイント
+│   │   ├── services/          # ビジネスロジック
+│   │   ├── models/            # データベースモデル
+│   │   ├── schemas/           # Pydanticスキーマ
+│   │   ├── llm/              # LLM統合
+│   │   └── tests/            # テストコード
+│   └── requirements.txt
+├── frontend/                   # フロントエンド（React + TypeScript）
+│   ├── src/
+│   │   ├── components/       # Reactコンポーネント
+│   │   ├── hooks/            # カスタムフック
+│   │   ├── services/         # APIクライアント
+│   │   └── types/            # TypeScript型定義
+│   └── package.json
+├── spec/                       # 仕様書
+├── docker-compose.yml          # Docker Compose設定
+├── SETUP.md                    # セットアップガイド
+└── README.md
+```
+
 ## 📈 システム要件
 
 ### 機能要件
 - ✅ ガイドワードベースのリスク特定
 - ✅ 3軸によるリスク評価
 - ✅ 対策の自動生成
-- ✅ レポート出力
+- 🚧 レポート出力（今後実装予定）
 
 ### 非機能要件
 - ⚡ レスポンスタイム: 30秒以内（リスク特定）
 - 👥 同時接続: 100ユーザー
-- 🔒 セキュリティ: OAuth 2.0認証、AES-256暗号化
-- 📊 可用性: 99.5%以上
+- 🔒 セキュリティ: CORS設定、入力検証
+- 📊 可用性: 99.5%以上（目標）
 
 ### 技術スタック
-- **バックエンド**: Python 3.11+, FastAPI
-- **フロントエンド**: React 18+, TypeScript, Tailwind CSS
+- **バックエンド**: Python 3.11+, FastAPI, SQLAlchemy
+- **フロントエンド**: React 18, TypeScript, Vite
 - **LLM**: OpenAI GPT-4 / Anthropic Claude
-- **データベース**: PostgreSQL 15+
-- **インフラ**: Docker, Kubernetes
+- **データベース**: PostgreSQL 15
+- **インフラ**: Docker, Docker Compose
 
 ## 📚 参考資料
 
@@ -375,10 +430,21 @@ open http://localhost:3000
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|----------|
-| 1.0.0 | 2025-11-08 | 初版リリース |
+| 1.1.0 | 2025-11-08 | フロントエンド実装完了（React + TypeScript） |
+| 1.0.0 | 2025-11-08 | バックエンド実装完了、初版リリース |
+| 0.1.0 | 2025-11-08 | 仕様書作成 |
+
+## 🎯 今後の予定
+
+- [ ] データベースマイグレーション（Alembic）
+- [ ] 認証・認可機能
+- [ ] レポート生成機能（PDF出力）
+- [ ] 統合テスト・E2Eテストの充実
+- [ ] CI/CD パイプライン
+- [ ] パフォーマンス最適化
 
 ---
 
-**作成日**: 2025年11月8日  
-**最終更新**: 2025年11月8日  
-**バージョン**: 1.0.0
+**作成日**: 2025年11月8日
+**最終更新**: 2025年11月8日
+**バージョン**: 1.1.0
