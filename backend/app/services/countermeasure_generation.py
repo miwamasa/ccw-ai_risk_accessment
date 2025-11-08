@@ -4,7 +4,7 @@ import json
 import re
 from typing import List
 from enum import Enum
-from app.models import RiskEvaluation, Countermeasure
+from app.models import RiskEvaluation, Countermeasure, MetaCountermeasure
 from app.llm.client import LLMClient
 from app.llm.prompts import CountermeasurePrompt
 
@@ -208,3 +208,88 @@ class CountermeasureGenerationService:
                 key=lambda c: c.priority,
                 reverse=True
             )
+
+    async def generate_from_meta_countermeasure(
+        self,
+        meta: MetaCountermeasure,
+        evaluation: RiskEvaluation
+    ) -> List[Countermeasure]:
+        """メタ対策から具体的な対策を生成
+
+        Args:
+            meta: メタ対策
+            evaluation: リスク評価結果
+
+        Returns:
+            具体的な対策のリスト
+        """
+        prompt = f"""# タスク
+以下のメタ対策を具体的な実装レベルの対策に展開してください。
+
+# リスク情報
+{evaluation.risk.risk_description if evaluation.risk else ""}
+
+# メタ対策
+対象軸: {meta.target_axis}
+アプローチ: {meta.meta_approach}
+具体例: {meta.example}
+
+# 出力形式
+{{
+  "countermeasures": [
+    {{
+      "description": "具体的な対策の内容",
+      "priority": <1-5>,
+      "feasibility": "高 | 中 | 低",
+      "implementation_timeline": "短期(1-3ヶ月) | 中期(3-6ヶ月) | 長期(6ヶ月以上)",
+      "expected_effect": "期待される効果の説明"
+    }}
+  ]
+}}
+
+# 要求事項
+- メタ対策を実現するための具体的な対策を2-4個提案する
+- 実装可能で具体的な内容を記述する
+- 優先順位をつける（1=低、5=高）
+- 実現可能性と効果のバランスを考慮する
+"""
+
+        response = await self.llm_client.call(
+            prompt=prompt,
+            system_prompt=CountermeasurePrompt.SYSTEM_PROMPT
+        )
+
+        # レスポンス解析
+        json_str = response.strip()
+
+        # コードブロックを除去
+        if json_str.startswith("```json"):
+            json_str = json_str[7:]
+        elif json_str.startswith("```"):
+            json_str = json_str[3:]
+        if json_str.endswith("```"):
+            json_str = json_str[:-3]
+        json_str = json_str.strip()
+
+        # 正規表現でJSONオブジェクトを抽出
+        match = re.search(r'\{.*\}', json_str, re.DOTALL)
+        if match:
+            json_str = match.group(0)
+
+        data = json.loads(json_str)
+
+        countermeasures = []
+        for item in data.get("countermeasures", []):
+            measure = Countermeasure(
+                evaluation_id=evaluation.evaluation_id,
+                meta_id=meta.meta_id,  # メタ対策とのリンク
+                strategy_type=meta.target_axis,
+                description=item["description"],
+                priority=item["priority"],
+                feasibility=item["feasibility"],
+                implementation_timeline=item["implementation_timeline"],
+                expected_effect=item.get("expected_effect", "")
+            )
+            countermeasures.append(measure)
+
+        return countermeasures

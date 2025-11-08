@@ -9,7 +9,9 @@ import type {
   IdentifiedRisk,
   RiskEvaluation,
   Countermeasure,
+  MetaCountermeasure,
   RisksListResponse,
+  MetaCountermeasuresListResponse,
   CountermeasuresListResponse,
 } from '@/types';
 
@@ -99,6 +101,38 @@ class APIClient {
   async getCountermeasures(evaluationId: string): Promise<Countermeasure[]> {
     const response = await this.client.get<CountermeasuresListResponse>(
       `/evaluations/${evaluationId}/countermeasures`
+    );
+    return response.data.countermeasures;
+  }
+
+  // メタ対策関連
+
+  /**
+   * メタ対策を生成
+   */
+  async generateMetaCountermeasures(evaluationId: string): Promise<MetaCountermeasure[]> {
+    const response = await this.client.post<MetaCountermeasuresListResponse>(
+      `/evaluations/${evaluationId}/generate-meta-countermeasures`
+    );
+    return response.data.meta_countermeasures;
+  }
+
+  /**
+   * 評価に関連するメタ対策を取得
+   */
+  async getMetaCountermeasures(evaluationId: string): Promise<MetaCountermeasure[]> {
+    const response = await this.client.get<MetaCountermeasuresListResponse>(
+      `/evaluations/${evaluationId}/meta-countermeasures`
+    );
+    return response.data.meta_countermeasures;
+  }
+
+  /**
+   * メタ対策から具体的対策を生成
+   */
+  async generateCountermeasuresFromMeta(metaId: string): Promise<Countermeasure[]> {
+    const response = await this.client.post<CountermeasuresListResponse>(
+      `/evaluations/meta/${metaId}/generate-countermeasures`
     );
     return response.data.countermeasures;
   }
