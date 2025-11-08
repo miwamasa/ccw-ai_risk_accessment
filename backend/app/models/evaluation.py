@@ -39,3 +39,8 @@ class RiskEvaluation(Base):
         back_populates="evaluation",
         cascade="all, delete-orphan"
     )
+    meta_countermeasures = relationship(
+        "MetaCountermeasure",
+        back_populates="evaluation",
+        cascade="all, delete-orphan"
+    )

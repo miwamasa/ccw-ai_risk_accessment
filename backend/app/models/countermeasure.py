@@ -22,6 +22,11 @@ class Countermeasure(Base):
         ForeignKey("risk_evaluations.evaluation_id"),
         nullable=False
     )
+    meta_id = Column(
+        String(36),
+        ForeignKey("meta_countermeasures.meta_id"),
+        nullable=True  # メタ対策から展開されたものはmeta_idを持つ
+    )
     strategy_type = Column(String(50), nullable=False)
     description = Column(Text, nullable=False)
     priority = Column(Integer)
@@ -32,3 +37,4 @@ class Countermeasure(Base):
 
     # リレーション
     evaluation = relationship("RiskEvaluation", back_populates="countermeasures")
+    meta_countermeasure = relationship("MetaCountermeasure", back_populates="countermeasures")
