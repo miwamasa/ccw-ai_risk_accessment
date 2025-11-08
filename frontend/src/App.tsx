@@ -15,13 +15,13 @@ import type {
 } from './types';
 import './App.css';
 
-type Step = 'situation' | 'risks' | 'evaluation' | 'countermeasures';
+type Step = 'situation' | 'risks' | 'evaluation' | 'meta-countermeasures' | 'countermeasures';
 
 function App() {
   const [step, setStep] = useState<Step>('situation');
   const [situation, setSituation] = useState<RiskSituation | null>(null);
   const [risks, setRisks] = useState<IdentifiedRisk[]>([]);
-  const [selectedRisk, setSelectedRisk] = useState<IdentifiedRisk | null>(null);
+  const [selectedRisks, setSelectedRisks] = useState<IdentifiedRisk[]>([]);
   const [evaluation, setEvaluation] = useState<RiskEvaluation | null>(null);
   const [countermeasures, setCountermeasures] = useState<Countermeasure[]>([]);
 
@@ -34,14 +34,15 @@ function App() {
     setRisks(identifiedRisks);
   };
 
-  const handleRiskSelected = (risk: IdentifiedRisk) => {
-    setSelectedRisk(risk);
+  const handleRisksSelected = (risks: IdentifiedRisk[]) => {
+    setSelectedRisks(risks);
+    // 最初のリスクを評価（後で複数対応に変更）
     setStep('evaluation');
   };
 
   const handleEvaluationCompleted = (newEvaluation: RiskEvaluation) => {
     setEvaluation(newEvaluation);
-    setStep('countermeasures');
+    setStep('meta-countermeasures');
   };
 
   const handleCountermeasuresGenerated = (newCountermeasures: Countermeasure[]) => {
@@ -51,7 +52,7 @@ function App() {
   const handleReset = () => {
     setSituation(null);
     setRisks([]);
-    setSelectedRisk(null);
+    setSelectedRisks([]);
     setEvaluation(null);
     setCountermeasures([]);
     setStep('situation');
@@ -74,8 +75,11 @@ function App() {
         <div className={`step ${step === 'evaluation' ? 'active' : evaluation ? 'completed' : ''}`}>
           3. リスク評価
         </div>
+        <div className={`step ${step === 'meta-countermeasures' ? 'active' : (step === 'countermeasures' || countermeasures.length > 0) ? 'completed' : ''}`}>
+          4. メタ対策
+        </div>
         <div className={`step ${step === 'countermeasures' ? 'active' : countermeasures.length > 0 ? 'completed' : ''}`}>
-          4. 対策導出
+          5. 具体的対策
         </div>
       </div>
 
@@ -89,15 +93,25 @@ function App() {
             situation={situation}
             risks={risks}
             onRisksIdentified={handleRisksIdentified}
-            onRiskSelected={handleRiskSelected}
+            onRisksSelected={handleRisksSelected}
           />
         )}
 
-        {step === 'evaluation' && selectedRisk && (
+        {step === 'evaluation' && selectedRisks.length > 0 && (
           <RiskEvaluationView
-            risk={selectedRisk}
+            risk={selectedRisks[0]}
             onEvaluationCompleted={handleEvaluationCompleted}
           />
+        )}
+
+        {step === 'meta-countermeasures' && evaluation && (
+          <div className="card">
+            <h2>メタ対策の生成</h2>
+            <p>メタ対策機能は現在実装中です...</p>
+            <button onClick={() => setStep('countermeasures')} className="button button-primary">
+              対策生成へ進む
+            </button>
+          </div>
         )}
 
         {step === 'countermeasures' && evaluation && (

@@ -1,8 +1,8 @@
 /**
- * リスク一覧表示・特定コンポーネント
+ * リスク一覧表示・特定コンポーネント（複数選択対応）
  */
 
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useRiskAssessment } from '@/hooks/useRiskAssessment';
 import type { RiskSituation, IdentifiedRisk } from '@/types';
 
@@ -10,16 +10,17 @@ interface RiskListProps {
   situation: RiskSituation;
   risks: IdentifiedRisk[];
   onRisksIdentified: (risks: IdentifiedRisk[]) => void;
-  onRiskSelected: (risk: IdentifiedRisk) => void;
+  onRisksSelected: (risks: IdentifiedRisk[]) => void;
 }
 
 export const RiskList: React.FC<RiskListProps> = ({
   situation,
   risks,
   onRisksIdentified,
-  onRiskSelected,
+  onRisksSelected,
 }) => {
   const { identifyRisks, isLoading, error } = useRiskAssessment();
+  const [selectedRiskIds, setSelectedRiskIds] = useState<Set<string>>(new Set());
 
   const handleIdentify = async () => {
     try {
@@ -28,6 +29,29 @@ export const RiskList: React.FC<RiskListProps> = ({
     } catch (err) {
       console.error('リスク特定に失敗しました:', err);
     }
+  };
+
+  const handleRiskToggle = (riskId: string) => {
+    const newSelected = new Set(selectedRiskIds);
+    if (newSelected.has(riskId)) {
+      newSelected.delete(riskId);
+    } else {
+      newSelected.add(riskId);
+    }
+    setSelectedRiskIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRiskIds.size === risks.length) {
+      setSelectedRiskIds(new Set());
+    } else {
+      setSelectedRiskIds(new Set(risks.map(r => r.risk_id)));
+    }
+  };
+
+  const handleEvaluateSelected = () => {
+    const selectedRisks = risks.filter(r => selectedRiskIds.has(r.risk_id));
+    onRisksSelected(selectedRisks);
   };
 
   const getCategoryColor = (category: string) => {
@@ -92,25 +116,59 @@ export const RiskList: React.FC<RiskListProps> = ({
             </div>
           </div>
 
+          <div className="selection-controls">
+            <div className="selection-info">
+              <span>{selectedRiskIds.size}件選択中</span>
+            </div>
+            <div className="selection-buttons">
+              <button
+                onClick={handleSelectAll}
+                className="button button-secondary"
+              >
+                {selectedRiskIds.size === risks.length ? 'すべて解除' : 'すべて選択'}
+              </button>
+              <button
+                onClick={handleEvaluateSelected}
+                disabled={selectedRiskIds.size === 0}
+                className="button button-primary"
+              >
+                選択したリスクを評価 ({selectedRiskIds.size}件)
+              </button>
+            </div>
+          </div>
+
           <div className="risk-list">
             {risks.map((risk) => (
-              <div key={risk.risk_id} className="risk-card" onClick={() => onRiskSelected(risk)}>
-                <div className="risk-header">
-                  <span className={`category-badge ${getCategoryColor(risk.category)}`}>
-                    {risk.category}
-                  </span>
-                  <span className="guideword-badge">{risk.guideword}</span>
-                  {risk.confidence_score && (
-                    <span className="confidence">
-                      信頼度: {Math.round(risk.confidence_score * 100)}%
+              <div
+                key={risk.risk_id}
+                className={`risk-card ${selectedRiskIds.has(risk.risk_id) ? 'selected' : ''}`}
+              >
+                <div className="risk-checkbox">
+                  <input
+                    type="checkbox"
+                    id={`risk-${risk.risk_id}`}
+                    checked={selectedRiskIds.has(risk.risk_id)}
+                    onChange={() => handleRiskToggle(risk.risk_id)}
+                  />
+                  <label htmlFor={`risk-${risk.risk_id}`}></label>
+                </div>
+                <div className="risk-content" onClick={() => handleRiskToggle(risk.risk_id)}>
+                  <div className="risk-header">
+                    <span className={`category-badge ${getCategoryColor(risk.category)}`}>
+                      {risk.category}
                     </span>
+                    <span className="guideword-badge">{risk.guideword}</span>
+                    {risk.confidence_score && (
+                      <span className="confidence">
+                        信頼度: {Math.round(risk.confidence_score * 100)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="risk-description">{risk.risk_description}</p>
+                  {risk.affected_area && (
+                    <p className="affected-area">影響範囲: {risk.affected_area}</p>
                   )}
                 </div>
-                <p className="risk-description">{risk.risk_description}</p>
-                {risk.affected_area && (
-                  <p className="affected-area">影響範囲: {risk.affected_area}</p>
-                )}
-                <button className="button button-secondary">このリスクを評価</button>
               </div>
             ))}
           </div>
