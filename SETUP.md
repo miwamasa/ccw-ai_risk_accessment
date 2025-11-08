@@ -86,7 +86,24 @@ pytest app/tests/unit/test_risk_identification.py
 
 ## 使用方法
 
-### 基本的なワークフロー
+### フロントエンドからの利用（推奨）
+
+ブラウザで `http://localhost:3000` にアクセスし、以下の手順で操作します：
+
+1. **状況入力**: AIシステムの状況を記述
+2. **リスク特定**: ガイドワードに基づいてリスクを自動特定（約30秒）
+3. **複数選択**: チェックボックスで評価したいリスクを選択
+4. **評価・メタ対策**: 選択したリスクを評価し、メタ対策を統合（リスク数×15秒+約20秒）
+5. **具体的対策**: メタ対策をクリックして具体的実装策を確認
+
+**便利機能**:
+- 💾 **セッション保存**: ヘッダーの「セッションを保存」ボタンでJSONファイルをダウンロード
+- 📂 **セッション復元**: 「セッションを読み込み」ボタンでJSONファイルから作業を再開
+- ⬅️ **ステップ移動**: プログレスバーをクリックまたは「前に戻る」ボタンで自由にステップを移動
+
+### APIからの利用（開発者向け）
+
+#### 基本的なワークフロー
 
 1. **リスク状況の作成**
 
@@ -114,11 +131,18 @@ curl -X POST http://localhost:8000/api/v1/situations/{situation_id}/identify-ris
 curl -X POST http://localhost:8000/api/v1/risks/{risk_id}/evaluate
 ```
 
-4. **対策の導出**
+4. **メタ対策の生成**
 
 ```bash
 # 取得したevaluation_idを使用
-curl -X POST http://localhost:8000/api/v1/evaluations/{evaluation_id}/generate-countermeasures
+curl -X POST http://localhost:8000/api/v1/evaluations/{evaluation_id}/generate-meta-countermeasures
+```
+
+5. **具体的対策の展開**
+
+```bash
+# 取得したmeta_idを使用
+curl -X POST http://localhost:8000/api/v1/evaluations/meta/{meta_id}/generate-countermeasures
 ```
 
 ## プロジェクト構造
@@ -127,35 +151,88 @@ curl -X POST http://localhost:8000/api/v1/evaluations/{evaluation_id}/generate-c
 .
 ├── backend/                    # バックエンドコード
 │   ├── app/
-│   │   ├── api/               # APIエンドポイント
+│   │   ├── api/routes/        # APIエンドポイント
 │   │   ├── services/          # ビジネスロジック
+│   │   │   ├── risk_identification.py
+│   │   │   ├── risk_evaluation.py
+│   │   │   ├── meta_countermeasure_generation.py
+│   │   │   └── countermeasure_generation.py
 │   │   ├── models/            # データベースモデル
+│   │   │   ├── situation.py
+│   │   │   ├── risk.py
+│   │   │   ├── evaluation.py
+│   │   │   ├── meta_countermeasure.py
+│   │   │   └── countermeasure.py
 │   │   ├── schemas/           # Pydanticスキーマ
 │   │   ├── llm/              # LLM統合
 │   │   ├── database/         # データベース設定
 │   │   └── tests/            # テストコード
 │   ├── requirements.txt       # Python依存関係
+│   ├── init_db.py            # データベース初期化スクリプト
 │   └── .env.example          # 環境変数サンプル
-├── frontend/                  # フロントエンド（未実装）
+├── frontend/                  # フロントエンド（React + TypeScript）
+│   ├── src/
+│   │   ├── components/       # Reactコンポーネント
+│   │   │   ├── SituationForm.tsx
+│   │   │   ├── RiskList.tsx
+│   │   │   ├── RiskEvaluationView.tsx
+│   │   │   ├── MultiRiskEvaluationView.tsx
+│   │   │   ├── MetaCountermeasureView.tsx
+│   │   │   └── CountermeasureList.tsx
+│   │   ├── hooks/            # カスタムフック
+│   │   ├── services/         # APIクライアント
+│   │   ├── types/            # TypeScript型定義
+│   │   └── App.tsx           # メインコンポーネント
+│   └── package.json
 ├── spec/                      # 仕様書
-├── docker/                    # Docker設定
 ├── docker-compose.yml         # Docker Compose設定
-└── README.md                  # プロジェクト概要
+├── setup_local.sh            # 自動セットアップ（Linux/Mac）
+├── setup_local.bat           # 自動セットアップ（Windows）
+├── README.md                  # プロジェクト概要
+├── SETUP.md                   # セットアップガイド
+└── TROUBLESHOOTING.md        # トラブルシューティング
 ```
 
 ## 主要コンポーネント
 
-### 1. リスク特定サービス (`services/risk_identification.py`)
+### バックエンド
+
+#### 1. リスク特定サービス (`services/risk_identification.py`)
 - 13種類のガイドワードに基づいてリスクを洗い出し
 - LLMを使用して自動的にリスクを特定
 
-### 2. リスク評価サービス (`services/risk_evaluation.py`)
+#### 2. リスク評価サービス (`services/risk_evaluation.py`)
 - 過酷度・発生頻度・回避可能性の3軸で評価
 - 各因子を1-5のスケールで定量化
 
-### 3. 対策導出サービス (`services/countermeasure_generation.py`)
-- 評価結果に基づいて対策を自動生成
-- 3つのアプローチから対策を提案
+#### 3. メタ対策生成サービス (`services/meta_countermeasure_generation.py`)
+- 評価結果から抽象的な対策方針を生成
+- 3軸それぞれに対するアプローチを提案
+- 複数リスクのメタ対策を統合・重複排除
+
+#### 4. 対策導出サービス (`services/countermeasure_generation.py`)
+- メタ対策から具体的実装レベルの対策を展開（2-4件/メタ対策）
+- 実現可能性、実装タイムライン、優先度を付与
+
+### フロントエンド
+
+#### 1. 複数リスク選択UI (`components/RiskList.tsx`)
+- チェックボックスによる複数リスク選択
+- 全選択/全解除機能
+
+#### 2. 複数リスク評価UI (`components/MultiRiskEvaluationView.tsx`)
+- 選択した複数リスクを順次評価
+- リアルタイム進捗表示
+- メタ対策の自動統合
+
+#### 3. メタ対策表示UI (`components/MetaCountermeasureView.tsx`)
+- 3軸ごとにメタ対策をグループ化して表示
+- クリックで具体的対策に展開
+
+#### 4. ワークフローナビゲーション (`App.tsx`)
+- プログレスバーによるステップ移動
+- 各ステップに「前に戻る」ボタン
+- セッション保存・復元機能（JSON形式）
 
 ## トラブルシューティング
 
@@ -192,10 +269,11 @@ docker-compose exec db psql -U postgres -d ai_risk_assessment
 
 ## 次のステップ
 
-1. フロントエンドの実装
-2. 統合テストの追加
-3. パフォーマンス最適化
-4. デプロイメントの自動化
+1. レポート生成機能（PDF/Excel出力）
+2. 統合テスト・E2Eテストの充実
+3. パフォーマンス最適化（キャッシング、並列処理）
+4. CI/CDパイプラインの構築
+5. マンダラチャート可視化機能（オプション）
 
 ## サポート
 
