@@ -2,6 +2,7 @@
 
 from typing import List, Optional
 import json
+import re
 from app.models import RiskSituation, IdentifiedRisk, Guideword
 from app.llm.client import LLMClient
 from app.llm.prompts import RiskIdentificationPrompt
@@ -173,13 +174,21 @@ class RiskIdentificationService:
         try:
             # JSON抽出（マークダウンのコードブロックを除去）
             json_str = response.strip()
+
+            # コードブロックを除去
             if json_str.startswith("```json"):
                 json_str = json_str[7:]
-            if json_str.startswith("```"):
+            elif json_str.startswith("```"):
                 json_str = json_str[3:]
             if json_str.endswith("```"):
                 json_str = json_str[:-3]
             json_str = json_str.strip()
+
+            # 正規表現でJSONオブジェクトを抽出（最初の { から対応する } まで）
+            # これにより、JSON後の追加テキストを無視できる
+            match = re.search(r'\{.*\}', json_str, re.DOTALL)
+            if match:
+                json_str = match.group(0)
 
             data = json.loads(json_str)
 
