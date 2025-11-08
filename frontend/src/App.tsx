@@ -6,11 +6,13 @@ import { useState } from 'react';
 import { SituationForm } from './components/SituationForm';
 import { RiskList } from './components/RiskList';
 import { RiskEvaluationView } from './components/RiskEvaluationView';
+import { MetaCountermeasureView } from './components/MetaCountermeasureView';
 import { CountermeasureList } from './components/CountermeasureList';
 import type {
   RiskSituation,
   IdentifiedRisk,
   RiskEvaluation,
+  MetaCountermeasure,
   Countermeasure,
 } from './types';
 import './App.css';
@@ -23,6 +25,7 @@ function App() {
   const [risks, setRisks] = useState<IdentifiedRisk[]>([]);
   const [selectedRisks, setSelectedRisks] = useState<IdentifiedRisk[]>([]);
   const [evaluation, setEvaluation] = useState<RiskEvaluation | null>(null);
+  const [metaCountermeasures, setMetaCountermeasures] = useState<MetaCountermeasure[]>([]);
   const [countermeasures, setCountermeasures] = useState<Countermeasure[]>([]);
 
   const handleSituationCreated = (newSituation: RiskSituation) => {
@@ -45,8 +48,12 @@ function App() {
     setStep('meta-countermeasures');
   };
 
+  const handleMetaCountermeasuresGenerated = (metas: MetaCountermeasure[]) => {
+    setMetaCountermeasures(metas);
+  };
+
   const handleCountermeasuresGenerated = (newCountermeasures: Countermeasure[]) => {
-    setCountermeasures(newCountermeasures);
+    setCountermeasures([...countermeasures, ...newCountermeasures]);
   };
 
   const handleReset = () => {
@@ -54,6 +61,7 @@ function App() {
     setRisks([]);
     setSelectedRisks([]);
     setEvaluation(null);
+    setMetaCountermeasures([]);
     setCountermeasures([]);
     setStep('situation');
   };
@@ -105,13 +113,11 @@ function App() {
         )}
 
         {step === 'meta-countermeasures' && evaluation && (
-          <div className="card">
-            <h2>メタ対策の生成</h2>
-            <p>メタ対策機能は現在実装中です...</p>
-            <button onClick={() => setStep('countermeasures')} className="button button-primary">
-              対策生成へ進む
-            </button>
-          </div>
+          <MetaCountermeasureView
+            evaluation={evaluation}
+            onMetaCountermeasuresGenerated={handleMetaCountermeasuresGenerated}
+            onCountermeasuresGenerated={handleCountermeasuresGenerated}
+          />
         )}
 
         {step === 'countermeasures' && evaluation && (

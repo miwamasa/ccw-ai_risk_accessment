@@ -10,6 +10,7 @@ import type {
   IdentifiedRisk,
   RiskEvaluation,
   Countermeasure,
+  MetaCountermeasure,
 } from '@/types';
 
 export const useRiskAssessment = () => {
@@ -76,6 +77,36 @@ export const useRiskAssessment = () => {
     }
   };
 
+  const generateMetaCountermeasures = async (evaluationId: string): Promise<MetaCountermeasure[]> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const metas = await apiClient.generateMetaCountermeasures(evaluationId);
+      return metas;
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateCountermeasuresFromMeta = async (metaId: string): Promise<Countermeasure[]> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const countermeasures = await apiClient.generateCountermeasuresFromMeta(metaId);
+      return countermeasures;
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     error,
@@ -83,5 +114,7 @@ export const useRiskAssessment = () => {
     identifyRisks,
     evaluateRisk,
     generateCountermeasures,
+    generateMetaCountermeasures,
+    generateCountermeasuresFromMeta,
   };
 };
