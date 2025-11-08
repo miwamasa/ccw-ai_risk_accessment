@@ -1,6 +1,7 @@
 """Risk evaluation service."""
 
 import json
+import re
 from typing import Dict
 from pydantic import BaseModel
 from app.models import IdentifiedRisk, RiskEvaluation
@@ -207,13 +208,21 @@ class RiskEvaluationService:
     def _parse_json_response(self, response: str) -> Dict:
         """JSONレスポンスをパース"""
         json_str = response.strip()
+
+        # コードブロックを除去
         if json_str.startswith("```json"):
             json_str = json_str[7:]
-        if json_str.startswith("```"):
+        elif json_str.startswith("```"):
             json_str = json_str[3:]
         if json_str.endswith("```"):
             json_str = json_str[:-3]
         json_str = json_str.strip()
+
+        # 正規表現でJSONオブジェクトを抽出（最初の { から対応する } まで）
+        # これにより、JSON後の追加テキストを無視できる
+        match = re.search(r'\{.*\}', json_str, re.DOTALL)
+        if match:
+            json_str = match.group(0)
 
         return json.loads(json_str)
 

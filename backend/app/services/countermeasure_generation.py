@@ -1,6 +1,7 @@
 """Countermeasure generation service."""
 
 import json
+import re
 from typing import List
 from enum import Enum
 from app.models import RiskEvaluation, Countermeasure
@@ -151,13 +152,21 @@ class CountermeasureGenerationService:
     ) -> List[Countermeasure]:
         """レスポンスを解析して対策オブジェクトに変換"""
         json_str = response.strip()
+
+        # コードブロックを除去
         if json_str.startswith("```json"):
             json_str = json_str[7:]
-        if json_str.startswith("```"):
+        elif json_str.startswith("```"):
             json_str = json_str[3:]
         if json_str.endswith("```"):
             json_str = json_str[:-3]
         json_str = json_str.strip()
+
+        # 正規表現でJSONオブジェクトを抽出（最初の { から対応する } まで）
+        # これにより、JSON後の追加テキストを無視できる
+        match = re.search(r'\{.*\}', json_str, re.DOTALL)
+        if match:
+            json_str = match.group(0)
 
         data = json.loads(json_str)
 
