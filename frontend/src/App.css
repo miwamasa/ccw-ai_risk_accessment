@@ -45,6 +45,7 @@ body {
   color: white;
   padding: 2rem;
   text-align: center;
+  position: relative;
 }
 
 .header h1 {
@@ -55,6 +56,19 @@ body {
 .subtitle {
   font-size: 1rem;
   opacity: 0.9;
+  margin-bottom: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.button-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
 /* Progress Bar */
@@ -73,6 +87,17 @@ body {
   font-weight: 500;
   color: var(--text-secondary);
   background: var(--bg-color);
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.progress-bar .step.clickable {
+  cursor: pointer;
+}
+
+.progress-bar .step.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .progress-bar .step.active {
@@ -899,4 +924,17 @@ label.required::after {
 .evaluation-action p {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
+}
+
+/* ナビゲーションバー */
+.navigation-bar {
+  margin-bottom: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.navigation-bar .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
