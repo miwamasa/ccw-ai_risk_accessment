@@ -755,3 +755,148 @@ label.required::after {
 .loading-measures p {
   margin: 0;
 }
+
+/* 複数リスク評価UI */
+.multi-risk-summary {
+  background: var(--bg-color);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.multi-risk-summary h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.risk-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.risk-item-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+}
+
+.risk-text {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.evaluation-progress {
+  margin: 2rem 0;
+}
+
+.evaluation-progress h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.progress-item {
+  padding: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  background: var(--card-bg);
+  transition: all 0.2s;
+}
+
+.progress-item.status-pending {
+  border-color: var(--border-color);
+  background: var(--bg-color);
+}
+
+.progress-item.status-evaluating {
+  border-color: var(--primary-color);
+  background: #eff6ff;
+}
+
+.progress-item.status-completed {
+  border-color: var(--success-color);
+  background: #f0fdf4;
+}
+
+.progress-item.status-error {
+  border-color: var(--danger-color);
+  background: #fef2f2;
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.progress-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.risk-description-short {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.evaluation-result-compact {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-color);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.evaluation-result-compact > span {
+  white-space: nowrap;
+}
+
+.error-text {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  background: #fee2e2;
+  border-radius: 0.25rem;
+}
+
+.integration-action {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--bg-color);
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.integration-action h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.integration-action p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.evaluation-action {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.evaluation-action p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
